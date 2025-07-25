@@ -1,0 +1,187 @@
+% Parameters  
+
+Fs = 48000; % Sampling frequency (Hz)  
+
+freqs = [700, 1400, 2100, 2800]; % Signal C frequencies  
+
+t = 0:1/Fs:1; % 1-second time vector  
+
+% Generate sinusoids  
+
+freqs1 = sin(2*pi*700*t);  
+
+freqs2 = sin(2*pi*1400*t);  
+
+freqs3 = sin(2*pi*2100*t);  
+
+freqs4 = sin(2*pi*2800*t);  
+
+signal = freqs1 + freqs2 + freqs3 + freqs4; % Signal C  
+
+% Filter parameters  
+
+fc = 2100; % Center frequency (Hz)  
+
+BW = 50; % Half bandwidth (Hz)  
+
+f_low = fc - BW; % Low cutoff  
+
+f_high = fc + BW; % High cutoff  
+
+WnL = f_low/(Fs/2); % Scaled low cutoff  
+
+WnH = f_high/(Fs/2); % Scaled high cutoff  
+
+% Plotting parameters  
+
+T = 1/700; % Period of 700 Hz  
+
+num_periods = 2; % Plot 2 periods  
+
+time_limit = num_periods * T;  
+
+offset_count = 10; % Offset for stable oscillation  
+
+ot = offset_count * T;  
+
+t_plot = 0:1/Fs:time_limit;  
+
+% Time-domain plots before filtering  
+
+figure;  
+
+for i = 1:4  
+
+subplot(5,1,i);  
+
+plot(t_plot, sin(2*pi*freqs(i)*t_plot));  
+
+title(['Sinusoid at ', num2str(freqs(i)), ' Hz']);  
+
+xlabel('Time (s)'); ylabel('Amplitude');  
+
+xlim([0 time_limit]); grid on;  
+
+end  
+
+subplot(5,1,5);  
+
+plot(t_plot, sum(sin(2*pi*freqs'*t_plot)));  
+
+title('Signal C'); xlabel('Time (s)'); ylabel('Amplitude');  
+
+xlim([0 time_limit]); grid on;  
+
+% Frequency-domain plot before filtering  
+
+L = 48000;  
+
+f = Fs*(0:(L/2))/L;  
+
+Y = fft(signal, L);  
+
+P2 = abs(Y/L);  
+
+P1 = P2(1:(L/2)+1);  
+
+P1(2:end-1) = 2*P1(2:end-1);  
+
+figure;  
+
+plot(f, 20*log10(P1));  
+
+title('Signal C Spectrum'); xlabel('Frequency (Hz)'); ylabel('Magnitude (dB)');  
+
+xlim([0 3000]); set(gca, 'XTick', 0:700:2800); grid on; 
+
+% Time-domain plot before filtering  
+
+figure;  
+
+plot(t, signal);  
+
+title(['Signal C Oscillation']);  
+
+xlabel('Time (s)'); ylabel('Amplitude');  
+
+xlim([ot time_limit+ot]); grid on;  
+
+% Filter design and plotting  
+
+window_types = {'hanning', 'blackman'};  
+
+N_values = [200, 400, 800];  
+
+for win = 1:length(window_types)  
+
+window_type = window_types{win};  
+
+if strcmp(window_type, 'hanning')  
+
+plot_lbl = 'Hanning';  
+
+else  
+
+plot_lbl = 'Blackman';  
+
+end  
+
+for N = N_values  
+
+% Generate window  
+
+if strcmp(window_type, 'hanning')  
+
+wdw = hann(N);  
+
+else  
+
+wdw = blackman(N);  
+
+end  
+
+% Design and apply filter  
+
+b = fir1(N-1, [WnL, WnH], 'bandpass', wdw);  
+
+filtered_signal = filter(b, 1, signal);  
+
+% Time-domain plot  
+
+figure;  
+
+plot(t, filtered_signal);  
+
+title(['Filtered Signal (', plot_lbl, ', N=', num2str(N), ') Stable Oscillation']);  
+
+xlabel('Time (s)'); ylabel('Amplitude');  
+
+xlim([ot time_limit+ot]); grid on;  
+
+% Frequency-domain plot  
+
+Y_filt = fft(filtered_signal, Fs);  
+
+P2_filt = abs(Y_filt/Fs);  
+
+P1_filt = P2_filt(1:floor(Fs/2)+1);  
+
+P1_filt(2:end-1) = 2*P1_filt(2:end-1);  
+
+figure;  
+
+plot(f, 20*log10(P1_filt));  
+
+title(['Filtered Spectrum (', plot_lbl, ', N=', num2str(N), ')']);  
+
+xlabel('Frequency (Hz)'); ylabel('Magnitude (dB)');  
+
+xlim([0 3000]); set(gca, 'XTick', 0:700:2800); grid on;  
+
+end  
+
+end 
+
+ 
+
+ 
