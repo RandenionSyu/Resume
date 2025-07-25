@@ -1,2 +1,2 @@
 # Resume
-This File contain all the Project I have done in University
+This File contain the Project I have done in University
